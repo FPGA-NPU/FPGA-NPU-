@@ -45,7 +45,7 @@ python main.py
 - `3`: 총성
 - `4`: 화재 경보
 
-실제 ZedBoard UART:
+실제 UART 연결 시작 코드:
 
 ```bash
 python main.py --port /dev/ttyUSB0 --baud 115200 \

@@ -1,0 +1,53 @@
+/*
+ * 최종 ui_data_source.c는 대략 아래 형태로 바뀐다.
+ *
+ * 이 파일은 설명용이며 Vitis build source에 추가하지 않는다.
+ */
+
+#include "ui_data_source.h"
+#include "ps_postprocess.h"
+#include "npu_driver.h"
+
+static u32 g_seq;
+
+void ui_data_source_init(void)
+{
+    g_seq = 1;
+    npu_init();
+}
+
+int ui_data_source_get(ui_result_t *result)
+{
+    static s16 logits[AUDIOSET_CLASS_COUNT];
+
+    if (result == 0) {
+        return -1;
+    }
+
+    /*
+     * C팀 driver API에 맞춰 실제 함수명은 조정.
+     */
+    npu_start();
+    npu_wait_done();
+
+    /*
+     * PL FC2 output:
+     *   527 x signed INT16 Q10
+     */
+    npu_get_output(logits, AUDIOSET_CLASS_COUNT);
+
+    /*
+     * 네 PS 후처리.
+     */
+    if (ps_postprocess(logits, result) != 0) {
+        return -1;
+    }
+
+    result->seq = g_seq++;
+
+    /*
+     * inference_us도 실제 timer 측정값으로 채우면 된다.
+     */
+
+    return 0;
+}
